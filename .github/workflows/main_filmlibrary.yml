@@ -14,7 +14,7 @@ env:
   NODE_VERSION: '20.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
     steps:
       - name: 'Checkout GitHub Action'
@@ -34,34 +34,6 @@ jobs:
           npm run test --if-present
           popd
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: node-app
-          path: .
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: node-app
-      
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_47BB188C3C3D45758E0AE75E509C392C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_75F703124B9A410C8597497570FA1BBB }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_816B8FD36E1C49BFAE0DFF5EC32AF39B }}
-
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
@@ -69,4 +41,4 @@ jobs:
           app-name: 'FilmLibrary'
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D60E62DA60E404D997F9E92FBF8B7B6 }}
